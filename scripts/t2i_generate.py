@@ -28,6 +28,13 @@ def parse_args():
     p.add_argument("--output_dir", type=str, default="./t2i_output")
     p.add_argument("--output", type=str, default=None, help="Output path for single prompt")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--stability_probe", action="store_true",
+                   help="Enable stability-layering hook and auto-save plots during generation")
+    p.add_argument("--stability_layer_index", type=int, default=-2)
+    p.add_argument("--stability_window", type=int, default=4)
+    p.add_argument("--stability_attn_threshold", type=float, default=0.90)
+    p.add_argument("--stability_conf_threshold", type=float, default=0.70)
+    p.add_argument("--stability_anchor_patience", type=int, default=2)
     return p.parse_args()
 
 
@@ -53,8 +60,29 @@ def main():
     results = []
     for i, prompt in enumerate(prompts):
         print(f"[{i+1}/{len(prompts)}] {prompt[:80]}")
+        safe = prompt[:40].replace(" ", "_").replace("/", "")
+        stability_plot_path = None
+        stability_json_path = None
+        if args.stability_probe:
+            stability_plot_path = os.path.join(
+                args.output_dir, f"{i:04d}_{safe}_stability.png"
+            )
+            stability_json_path = os.path.join(
+                args.output_dir, f"{i:04d}_{safe}_stability.json"
+            )
         res = model.generate_image(prompt, image_h=args.image_h, image_w=args.image_w,
-                                   steps=args.steps, cfg_scale=args.cfg_scale)
+                                   steps=args.steps, cfg_scale=args.cfg_scale,
+                                   stability_probe=args.stability_probe,
+                                   stability_plot_path=stability_plot_path,
+                                   stability_json_path=stability_json_path,
+                                   stability_layer_index=args.stability_layer_index,
+                                   stability_window=args.stability_window,
+                                   stability_attn_threshold=args.stability_attn_threshold,
+                                   stability_conf_threshold=args.stability_conf_threshold,
+                                   stability_anchor_patience=args.stability_anchor_patience)
+        if args.stability_probe:
+            print(f"  stability plot → {stability_plot_path}")
+            print(f"  stability json → {stability_json_path}")
         results.append({"prompt": prompt, **res})
 
     del model; gc.collect(); torch.cuda.empty_cache()

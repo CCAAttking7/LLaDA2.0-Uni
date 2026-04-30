@@ -1,0 +1,16 @@
+{
+    "min_pixels": 262144,
+    "max_pixels": 4194304,
+    "do_rescale": true,
+    "do_normalize": true,
+    "do_resize": false,
+    "patch_size": 16,
+    "temporal_patch_size": 1,
+    "merge_size": 1,
+    "image_mean": [0.5, 0.5, 0.5],
+    "image_std": [0.5, 0.5, 0.5],
+    "image_processor_type": "GlmImageImageProcessor",
+    "processor_class": "GlmImageProcessor",
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098
+}
